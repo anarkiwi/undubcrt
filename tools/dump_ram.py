@@ -13,8 +13,9 @@ import os
 import sys
 import time
 
-ROOT = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
-sys.path.insert(0, ROOT)  # so `import drv` (the shared harness) resolves
+HERE = os.path.dirname(os.path.abspath(__file__))
+ROOT = os.path.dirname(HERE)  # repo root; dumps are written here
+sys.path.insert(0, HERE)  # so `import drv` (the sibling harness) resolves
 
 import drv  # noqa: E402
 from vice_driver.keys import lookup  # noqa: E402

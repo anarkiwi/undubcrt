@@ -26,7 +26,7 @@ hence the two-stage process below.
 - `dubcrt.crt` in the repo root (not tracked — supply your own copy).
 - For the RAM-derived segments: Docker with an `asid-vice:latest` image and the
   [`vice-driver`](https://github.com/anarkiwi/vice-driver) Python package importable
-  (the harness `drv.py` in this repo expects it next door, at `../vice-driver`).
+  (the harness `tools/drv.py` expects it next door, at `../vice-driver`).
 
 ## Steps
 

@@ -1,11 +1,12 @@
 """Interactive harness to drive dubcrt.crt under asid-vice."""
 import sys, time, os
-sys.path.insert(0, os.path.abspath("../vice-driver"))
+ROOT = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))  # repo root (tools/..)
+sys.path.insert(0, os.path.join(ROOT, "..", "vice-driver"))  # sibling checkout
 from vice_driver import BinMon, DiskMount, ViceContainer
 from vice_driver.keys import lookup
 from vice_driver.screen import parse_screen_response
 
-CRT = os.path.abspath("dubcrt.crt")
+CRT = os.path.join(ROOT, "dubcrt.crt")
 PORT = int(os.environ.get("DUBCRT_PORT", "6555"))  # host port, avoid 6502 (other container)
 
 def make_container(**kw):

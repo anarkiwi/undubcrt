@@ -59,9 +59,10 @@ Solving the title-screen pipe puzzle unlocks the hidden **defMON** music tool on
 |------|---------|
 | `README.md`, `SECRET.md` | controls and the secret walkthrough |
 | `img/` | VICE screengrabs |
-| `drv.py`, `capture.py` | boot harness; screengrab driver (uses `vice_driver.display` for the framebuffer grab) |
-| `nav.py`, `apps.py`, `dumpall.py`, `verify.py`, `secret.py` | probing / verification scripts |
-| `tools/`, `DISASSEMBLY.md` | regenerate the disassembly (see the guide) |
+| `tools/` | all scripts: boot harness (`drv.py`), screengrab driver (`capture.py`, via `vice_driver.display`), probing (`nav.py`, `apps.py`, `dumpall.py`, `verify.py`, `secret.py`, `probe.py`, `keyprobe.py`) and the disassembly generators |
+| `DISASSEMBLY.md` | how to regenerate the disassembly |
+
+Run the scripts from the repo root, e.g. `python tools/capture.py`.
 
 The cartridge image (`dubcrt.crt`), binary dumps (`*.bin`) and generated disassembly
 (`*.asm`) are intentionally **not** tracked — see `.gitignore` and `DISASSEMBLY.md`.
