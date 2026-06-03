@@ -1,12 +1,16 @@
 import drv, time, os
 from vice_driver.keys import lookup
 from vice_driver.binmon import TAP_MODE_FIXED
-from vgrab import grab
+from vice_driver.display import parse_display_response, parse_palette_response
 os.makedirs("img", exist_ok=True)
 def hold(bm,n,f=30): bm.keymatrix_tap([lookup(n)],mode=TAP_MODE_FIXED,frames=f)
+def grab(bm, path, crop=True):
+    snap = parse_display_response(bm.display_get())
+    pal = parse_palette_response(bm.palette_get())
+    snap.save_png(path, pal, crop_inner=crop)
 def shot(bm,name,settle=0.0,crop=True):
     if settle: time.sleep(settle)
-    grab(bm, f"img/{name}.png", crop_border=crop)
+    grab(bm, f"img/{name}.png", crop=crop)
     print(f"saved img/{name}.png  app={bm.mem_get(0xbf2,0xbf2)[0]} FFE={bm.mem_get(0xffe,0xffe)[0]} FFD={bm.mem_get(0xffd,0xffd)[0]}")
 
 c=drv.make_container(); c.start(); print("started",c.container_id[:12])

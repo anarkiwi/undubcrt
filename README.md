@@ -59,7 +59,7 @@ Solving the title-screen pipe puzzle unlocks the hidden **defMON** music tool on
 |------|---------|
 | `README.md`, `SECRET.md` | controls and the secret walkthrough |
 | `img/` | VICE screengrabs |
-| `drv.py`, `vgrab.py`, `capture.py` | boot harness, VICE framebuffer grab, screengrab driver |
+| `drv.py`, `capture.py` | boot harness; screengrab driver (uses `vice_driver.display` for the framebuffer grab) |
 | `nav.py`, `apps.py`, `dumpall.py`, `verify.py`, `secret.py` | probing / verification scripts |
 | `tools/`, `DISASSEMBLY.md` | regenerate the disassembly (see the guide) |
 
