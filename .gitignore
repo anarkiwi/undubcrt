@@ -1,0 +1,8 @@
+# never track cartridge images or binary dumps
+*.crt
+*.bin
+
+# python caches
+__pycache__/
+*.pyc
+*.asm
