@@ -1,17 +1,22 @@
-"""Screengrab the secret remix unlock, solving the title-screen pipe puzzle
-for real -- every tile rotation is a genuine keypress driven through the CIA
+"""Screengrab the secret remix unlock, driven by real input. The game is played
+with the joystick (port 2, via the io-sim joyport) to scroll the $ pickups into
+view; the title pipe puzzle is solved with genuine keypresses through the CIA
 keyboard matrix (the cartridge scans $DC00/$DC01 directly; the KERNAL is never
 involved), and the gate ($0FFE: 0 -> 1 -> 2) is advanced by the cartridge's own
-code, not poked. The only shortcut is arming: instead of grabbing $24 pickups in
-the game we set the arm counter ($0FFB) and rotation range ($0FFD) directly."""
-import drv, time, os
+code, not poked. The only shortcut is arming: rather than collecting enough $24
+pickups we set the arm counter ($0FFB) and rotation range ($0FFD) directly."""
+import struct, drv, time, os
 from vice_driver.keys import lookup
-from vice_driver.binmon import TAP_MODE_FIXED
+from vice_driver.binmon import TAP_MODE_FIXED, OPCODE
 from vice_driver.display import parse_display_response, parse_palette_response
 os.makedirs("img", exist_ok=True)
 
 def tap(bm, n, f=12):
     bm.keymatrix_tap([lookup(n)], mode=TAP_MODE_FIXED, frames=f); time.sleep(0.2)
+def joy(bm, value):   # drive control port 2 (joyport index 1) via the io-sim device
+    bm.call(OPCODE.JOYPORT_SET, struct.pack("<HH", 1, value))
+def visible_pickups(bm):  # count '$' (screen code $24) on the visible text screen
+    return bytes(bm.mem_get(0x0400, 0x07e7)).count(0x24)
 def grid(bm):  return list(bm.mem_get(0xff0, 0xff8))
 def ffe(bm):   return bm.mem_get(0xffe, 0xffe)[0]
 def app(bm):   return bm.mem_get(0xbf2, 0xbf2)[0]
@@ -52,8 +57,12 @@ try:
     bm = drv.connect(); bm.exit(); time.sleep(4)
     shot(bm, "01_title")                       # boot title (puzzle dormant)
 
-    tap(bm, "8", 30); shot(bm, "02_game", 2.0)  # key 8 -> the game ($ pickups arm it)
-    to_menu(bm)
+    tap(bm, "8", 30); time.sleep(1.5)           # key 8 -> the game
+    for _ in range(40):                         # walk left until the $ pickups scroll into view
+        joy(bm, 0x04); time.sleep(0.22); joy(bm, 0); time.sleep(0.05)
+        if visible_pickups(bm) >= 6: break
+    shot(bm, "02_game", 0.6)                     # the game, $ pickups on screen
+    joy(bm, 0); to_menu(bm)
 
     bm.mem_set(0xffb, bytes([0x40]))            # armed (= having eaten the $24 pickups)
     bm.mem_set(0xffd, bytes([0x0c]))            # rotation range unlocked (= fully shuffled)
