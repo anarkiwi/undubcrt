@@ -1,95 +1,139 @@
 # Entering the secret remix mode
 
-The title screen is secretly a **3×3 pipe puzzle**. Solving it unlocks a hidden
-**defMON** music-remix tool on key **9**. The gate is the state byte `$0FFE`: it must
-reach **2**, which only happens when the puzzle grid matches two target patterns in
-sequence.
+The title screen is secretly a **3×3 pipe puzzle**. Connect the pipes and the
+title bursts into a hidden **defMON** music-remix tool, reached with key **9**.
 
-There is no shortcut — exhaustive analysis confirms `$0FFE = 2` is *only* written by the
-stage-2 puzzle match, the puzzle is only solvable after the grid is "armed", and the
-**only** thing that arms it is the game. So the four steps below are the whole path.
+Everything below the "What you actually do" walkthrough is just the player's
+view — what is on screen and which keys to press. The "Under the hood" section
+at the end explains the machinery, but you never see any of it while playing.
 
 ---
 
-## Step 1 — arm the puzzle in the game
+## What you actually do
 
-Launch the game with key **8** and collect the **`$` pickups** (screen-code `$24`).
-Each one runs `inc $0FFB` — the single instruction in the entire cartridge that arms the
-puzzle. (Just entering the game is not enough; its init clears the counter, so you must
-actually grab dollar signs.) Then press **SPACE** to go back to the title.
+### 1. Play the game and collect the `$` pickups
+
+Press **8** to start the game and grab some **`$`** pickups, then press **SPACE**
+to return to the title. Collecting dollar signs is what *arms* the puzzle — just
+visiting the game does nothing. Until you have done this, the title tiles barely
+move when you press keys; afterwards they rotate freely.
 
 ![the game — collect the $ pickups](img/02_game.png)
 
-## Step 2 — the title "shuffles"
+### 2. Rotate the tiles to read the board
 
-Because the arm counter is now non-zero, the title routine raises the tile-rotation
-modulus `$0FFD` from 3 to **12**, so the eight outer tiles can now be rotated through
-their full range (they were frozen before). Bounce in and out a few times if needed
-until it is fully unlocked.
-
-## Step 3 — solve the pipe puzzle ⭐
-
-This is the heart of it. Each of the **eight outer tiles** is rotated by a number key;
-the **centre is automatic**. Press a number key to rotate that tile (it briefly shows
-that app), then **SPACE** back to the title to see the grid — repeat to rotate further.
+Back on the title, the nine tiles are now a live pipe puzzle. Each of the **eight
+outer tiles** is rotated by a number key; the **centre tile sets itself**.
 
 ```
-        grid cell  ─►  rotate with key
         ┌─────┬─────┬─────┐
         │  1  │  2  │  3  │
         ├─────┼─────┼─────┤
-        │  4  │  ·  │  5  │     ·  = centre tile (set automatically)
+        │  4  │  ·  │  5  │     ·  = centre tile (automatic)
         ├─────┼─────┼─────┤
         │  6  │  7  │  8  │
         └─────┴─────┴─────┘
+          number key  ─►  rotates that tile
 ```
 
-Rotate the tiles so the grid matches the two solved patterns **in order**. The numbers
-below are each tile's internal rotation state (cell order, left-to-right / top-to-bottom);
-in play you simply rotate each pipe until the network connects:
+Pressing a number rotates its tile one step but also drops you briefly into that
+tile's app — press **SPACE** to come back to the title and see the board. So the
+loop is: **press a number → SPACE → look → repeat** until the pipe is where you
+want it. Right now the pipes are scrambled and disconnected:
 
-| Stage | tiles `[0 1 2  3 4 5  6 7 8]` | result |
-|-------|------------------------------|--------|
-| **1** | `07 02 04  01 00 01  06 02 05` | `$0FFE` 0 → 1, **centre tile auto-sets to `03`** |
-| **2** | `07 0b 04  09 03 08  06 0a 05` | `$0FFE` 1 → 2 → **unlock** |
+![scrambled pipe puzzle](img/03_scrambled.png)
 
-Note only the four edge tiles (keys **2, 4, 5, 7**) change between stage 1 and stage 2;
-the corners (keys **1, 3, 6, 8**) are already correct once stage 1 is solved. Completing
-stage 1 fills in the centre (`$0FF4 = 03`) for you, which is exactly what stage 2 needs.
+### 3. Connect the first network (stage 1)
 
-![the live pipe puzzle on the title screen](img/03_puzzle.png)
+Rotate the tiles until the pipes link up into a connected loop. The moment the
+whole board connects, **stage 1 locks in**: the background turns **blue** and the
+**centre tile fills in** as a ring. That is your signal the first half is done.
 
-## Step 4 — the reveal
+![stage 1 solved — centre ring forms on a blue field](img/04_stage1.png)
 
-The instant the grid matches stage 2, `$0FFE` becomes `2` and the title bursts into the
-**remix / credits screen** — and the keyboard scanner now accepts key **9**:
+### 4. Connect the second network (stage 2) → the reveal
 
-![remix / credits reveal](img/04_remix.png)
+From the stage-1 shape, only the **four edge tiles — keys 2, 4, 5, 7** — still
+need turning; the four corners (keys 1, 3, 6, 8) are already correct. Rotate
+those four until the network closes up completely. The instant it does, the
+screen **bursts into the red remix / credits screen**:
 
-> *…GRAPHICS BY ILKKE — CODE BY 4MAT*
+![stage 2 solved — remix / credits reveal](img/05_reveal.png)
 
-## Step 5 — press 9
+> *…CODE BY 4MAT — ORGANIZATION BY RAY M…* (a scrolling credit)
 
-With the puzzle solved, **key 9** is finally live. Press it to drop into the secret
-**defMON** music-remix tool. Its three SID channels are live-tweakable with the global
-"knob" keys (F1–F7, cursor keys, shifts, C=) — see the per-app controls in the
-[README](README.md).
+### 5. Press 9 for the secret tool
+
+With the puzzle solved, **key 9** is finally live. Press it to drop into the
+secret **defMON** music-remix tool. Its three SID channels are live-tweakable
+with the global "knob" keys (F1–F7, cursor keys, shifts, C=) — see the per-app
+controls in the [README](README.md).
 
 ![secret defMON remix tool](img/06_secret.png)
 
 ---
 
-## Why there is no other way in
+## Under the hood
 
-Scanning every loaded resource for writers of the three gate variables:
+You never see any of the following while playing — it is the machinery the steps
+above are driving.
 
-* **`$0FFB`** (arm) — only ever set by the game's `inc $0FFB` at `$C604`. Its own init
-  clears it; the title only decrements it.
-* **`$0FFD`** (rotation modulus) — only `#3` at boot and the title's shuffle `inc`. While
-  it is 3, the tiles can't reach the values the targets need.
-* **`$0FFE`** (the gate) — only `#0` at boot, `#1` on the stage-1 match, `#2` on the
+### The three gate variables
+
+| Address  | Role                | What changes it                                              |
+|----------|---------------------|-------------------------------------------------------------|
+| `$0FFB`  | **arm** counter     | `inc $0FFB` when you eat a `$` pickup (screen-code `$24`); nothing else sets it. |
+| `$0FFD`  | **rotation range**  | `#3` at boot; the title's *shuffle* raises it toward **12** while armed. |
+| `$0FFE`  | **the gate**        | `#0` at boot → `#1` on the stage-1 match → `#2` on the stage-2 match. |
+
+Key **9** (the defMON tool) only responds once `$0FFE` has reached **2**.
+
+### Why the two steps in the game matter
+
+- **Arming.** The eight outer tiles are rotated by `inc $0FF0,x`, wrapping at
+  `$0FFD`. At boot `$0FFD = 3`, so each tile can only cycle through values 1–2 —
+  far too few to ever form the target shapes (which need values up to `$0b`).
+  Eating `$` pickups makes `$0FFB` non-zero, which unlocks the title's shuffle.
+- **Shuffle.** While `$0FFB` is non-zero, each time the title redraws it nudges
+  `$0FFD` upward (and spends one `$0FFB`), until `$0FFD = 12`. Only then can the
+  tiles reach every rotation the targets need. This is why the tiles feel
+  "frozen" before you play and "free" afterwards.
+
+### The two target patterns
+
+Each tile has an internal rotation value 0–11. The gate code compares the whole
+grid (`$0FF0`–`$0FF8`, cell order left-to-right / top-to-bottom) against two
+fixed targets in sequence:
+
+| Stage | grid `[0 1 2  3 4 5  6 7 8]`   | effect                                             |
+|-------|-------------------------------|----------------------------------------------------|
+| **1** | `07 02 04  01 00 01  06 02 05` | `$0FFE` 0 → 1, and the **centre `$0FF4` auto-sets to `03`** |
+| **2** | `07 0b 04  09 03 08  06 0a 05` | `$0FFE` 1 → 2 → **unlock**                          |
+
+Note only cells 1, 3, 5, 7 (keys **2, 4, 5, 7**) differ between the two stages,
+and stage 1 leaves the centre at exactly the `03` that stage 2 requires — which
+is why step 4 is just "turn the four edges".
+
+### Why there is no other way in
+
+Scanning every loaded resource for writers of the gate variables:
+
+- **`$0FFB`** is only ever incremented by the game's `inc $0FFB` at `$C604`; its
+  own init clears it and the title only decrements it.
+- **`$0FFD`** is only `#3` at boot and the title's shuffle `inc`. While it is 3
+  the tiles cannot reach the values the targets need.
+- **`$0FFE`** is only `#0` at boot, `#1` on the stage-1 match, and `#2` on the
   stage-2 match. Nothing else writes it.
 
-(`$0CAE`, which the dispatcher also treats as a "force secret" flag, is never written by
-any code in any bank — it is vestigial.) The single theoretical exception is a cold boot
-whose uninitialised `$0FFB` happens to be non-zero; in practice it boots to `$00`.
+(`$0CAE`, which the dispatcher also treats as a "force secret" flag, is never
+written by any code in any bank — it is vestigial.) The single theoretical
+exception is a cold boot whose uninitialised `$0FFB` happens to be non-zero; in
+practice it boots to `$00`. So the walkthrough above is the whole path.
+
+---
+
+The screenshots here are produced by [`tools/capture.py`](tools/capture.py),
+which solves the puzzle for real — every tile rotation is a genuine keypress fed
+through the CIA keyboard matrix and the gate is advanced by the cartridge's own
+code, not poked. (The one shortcut it takes is arming the board directly instead
+of playing the game to collect pickups.)
